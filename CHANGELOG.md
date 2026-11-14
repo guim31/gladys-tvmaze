@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-14
+
 ### Added
 
 - A "TV shows" calendar per user, filled from TVmaze with the episodes of the
@@ -24,3 +26,6 @@ the notes of the version's GitHub Release.
 - Dashboard widget "Upcoming episodes".
 - Administrator actions "Check" and "Search a show".
 - English, French, German and Spanish.
+
+[Unreleased]: https://github.com/guim31/gladys-tvmaze/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-tvmaze/releases/tag/v1.0.0
