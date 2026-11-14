@@ -112,6 +112,26 @@ test('"episode announced" also fires when the last known episode has aired', asy
   );
 });
 
+test('a show dated one episode at a time is not announced at every episode', async () => {
+  const show = fixture('show-83');
+  const api = fakeTvMaze({ '/shows/83': () => show });
+  const world = await sharedWorld({ api });
+  // 8 December: the finale aired yesterday, TVmaze dates an episode tomorrow.
+  show._embedded.nextepisode = {
+    ...show._embedded.previousepisode,
+    id: 9_000_003,
+    season: 38,
+    number: 11,
+    airdate: '2026-12-09',
+    airtime: '20:00',
+    airstamp: '2026-12-10T01:00:00+00:00',
+  };
+  world.clock.now = Date.parse('2026-12-08T12:00:00Z');
+  await world.app.refresh();
+  await world.app.idle();
+  assert.equal(world.fake.sceneEvents.length, 0);
+});
+
 test('"next episode": a show by its title, or the soonest of all', async () => {
   const world = await sharedWorld();
   const run = async (fields) => (await world.fake.sceneAction('next_episode', fields)).data.outputs;

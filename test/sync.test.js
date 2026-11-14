@@ -41,7 +41,7 @@ test('a user gets a "TV shows" calendar with the episodes of the window', async 
 test('the calendar description says what was matched, and what was not', async () => {
   const world = await createWorld({ accounts: [account('alice', LIST, 'en')] });
   const { description } = world.calendarOf('alice');
-  assert.match(description, /^Followed: The Simpsons \(1989, FOX, #83\), Breaking Bad/);
+  assert.match(description, /Followed: The Simpsons \(1989, FOX, #83\), Breaking Bad/);
   assert.match(description, /Severance \(2022, Apple TV, #44933\)/);
   // The ambiguous title: the best match, and the other shows of that title.
   assert.match(description, /The Office \(2005, NBC, #526\)/);

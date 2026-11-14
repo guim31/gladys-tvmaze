@@ -62,18 +62,11 @@ export function showLabel(show) {
 /** The description of a user's calendar: what is followed, what went wrong. */
 export function calendarDescription(user, language) {
   const text = pick(TEXT, language);
+  // The notices first: the list of shows can be long, and the description
+  // is cut at 500 characters.
   const lines = [];
   if (user.shows.length === 0 && user.notFound.length === 0 && user.unavailable.length === 0) {
     lines.push(text.none);
-  }
-  if (user.shows.length > 0) {
-    lines.push(`${text.following} ${user.shows.map(({ show }) => showLabel(show)).join(', ')}.`);
-  }
-  for (const { show, others } of user.shows) {
-    if (others?.length > 0) {
-      const list = others.map((other) => showLabel(other)).join(', ');
-      lines.push(`${text.sameTitle(show.name)} ${list}.`);
-    }
   }
   if (user.notFound.length > 0) {
     lines.push(`${text.notFound} ${user.notFound.join(', ')}.`);
@@ -86,6 +79,15 @@ export function calendarDescription(user, language) {
   }
   if (user.truncated > 0) {
     lines.push(`${text.truncated(user.truncated)}.`);
+  }
+  if (user.shows.length > 0) {
+    lines.push(`${text.following} ${user.shows.map(({ show }) => showLabel(show)).join(', ')}.`);
+  }
+  for (const { show, others } of user.shows) {
+    if (others?.length > 0) {
+      const list = others.map((other) => showLabel(other)).join(', ');
+      lines.push(`${text.sameTitle(show.name)} ${list}.`);
+    }
   }
   const credit = text.credit;
   return `${truncate(lines.join('\n'), MAX_DESCRIPTION - credit.length - 1)}\n${credit}`;

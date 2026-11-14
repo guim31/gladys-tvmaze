@@ -19,6 +19,8 @@ const FRESH_MS = REFRESH_MS - 30 * 60_000;
 // A show TVmaze answers 404 for, while it was known: dropped at the third
 // answer in a row, never on a single one.
 const MISSING_LIMIT = 3;
+// The gap after the last known episode that makes a new one an announcement.
+const BREAK_MS = 14 * 86_400_000;
 const SEARCH_TTL_MS = 7 * 86_400_000;
 // After a failed reading, a show is not asked again before this delay.
 const FAILURE_BACKOFF_MS = 10 * 60_000;
@@ -115,9 +117,19 @@ export class Catalog {
         rawEpisodes.push(...(await this.client.seasonEpisodes(season.id)));
       }
       const entry = { show, episodes: mergeEpisodes(show, rawEpisodes), fetchedAt: now };
-      // A show back on the schedule: it had no next episode left at the last
-      // reading (a renewal dated, a season announced), and now has one.
-      if (cached && !nextEpisode(cached.episodes, now) && show.next && show.next.end > now) {
+      // A show back on the schedule (a renewal dated, a season announced):
+      // it had no next episode at the last reading, or none left and the new
+      // one comes after a break. A show dated one episode at a time (daily
+      // shows) is not announced at every episode.
+      const lastKnown = cached?.episodes.at(-1);
+      const back =
+        cached &&
+        show.next &&
+        show.next.end > now &&
+        (!cached.show.next ||
+          (!nextEpisode(cached.episodes, now) &&
+            (!lastKnown || show.next.start - lastKnown.end >= BREAK_MS)));
+      if (back) {
         this.announced.push({ show, episode: show.next });
       }
       this.shows.set(id, entry);
