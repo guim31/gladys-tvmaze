@@ -1,0 +1,119 @@
+# TVmaze
+
+Los próximos episodios de sus series en Gladys, según [TVmaze](https://www.tvmaze.com), una guía de
+televisión gratuita: un calendario por usuario, un widget de panel y disparadores de escena. Sin
+cuenta ni clave de API.
+
+Esta integración no está afiliada a TVmaze. Se ha probado con la API real de TVmaze y el doble de
+pruebas de Gladys, todavía no en una instancia real de Gladys: sus comentarios son bienvenidos en el
+foro o en GitHub.
+
+## Lo que obtiene
+
+- **Un calendario «Series de TV» por usuario**, en el calendario de Gladys: cada episodio de las
+  series que sigue, desde dos semanas atrás hasta un año por delante, con su temporada y su número
+  (S02E10), su título, su cadena o plataforma (FOX, Apple TV, Netflix…) como lugar y su resumen. Un
+  episodio con hora de emisión dura su duración; un episodio publicado sin hora (en streaming, la
+  mayoría de las veces) ocupa todo el día.
+- **Un widget de panel**, «Próximos episodios»: los episodios que vienen y la situación de cada serie
+  (próximo episodio dentro de 3 días, finalizada, en emisión sin fecha).
+- **Dos disparadores de escena**: un episodio de una serie seguida se emite hoy (por la mañana o a su
+  hora de emisión), y se anuncia un nuevo episodio para una serie que ya no tenía.
+- **Una acción de escena**, «Leer el próximo episodio»: el próximo episodio de una serie, los días
+  restantes y el estado de la serie.
+
+La vista de calendario, el calendario del panel y el disparador integrado «un evento del calendario
+se acerca» de Gladys también funcionan con estos calendarios una vez compartidos.
+
+## Configuración
+
+**Cada usuario** activa la integración en su página, en «Mis calendarios», y enumera las series que
+sigue en **Series seguidas**, separadas por comas:
+
+- un **título**: `Severance`, `The Simpsons`. Se toma el mejor resultado de TVmaze;
+- un **identificador de TVmaze**: `#526` (o `526`);
+- una **dirección de TVmaze**: `https://www.tvmaze.com/shows/526/the-office`.
+
+La descripción de su calendario indica qué serie ha encontrado cada título (año, cadena,
+identificador), los títulos que TVmaze no conoce y las demás series con el mismo título: «The Office»
+encuentra la serie estadounidense de 2005 (#526), la británica de 2001 es #1292. Para elegir otra,
+escriba su identificador en lugar del título. 25 series como máximo por usuario.
+
+El calendario es **privado** al principio. **Compártalo** (el interruptor en «Mis calendarios») para
+verlo en el panel y usarlo en las escenas: como cualquier calendario de Gladys, solo los calendarios
+compartidos llegan a las escenas, y un calendario compartido es visible para todo el hogar.
+
+El **administrador** elige el idioma de las fechas y los estados enviados a las escenas. El nombre y
+la descripción de los calendarios siguen el idioma de cada usuario.
+
+## Acciones
+
+En la página de la integración, para el administrador:
+
+- **Comprobar**: vuelve a leer TVmaze ahora para todos los usuarios e indica cuántas series y
+  próximos episodios se han leído.
+- **Buscar una serie**: escriba un título y obtenga los mejores resultados de TVmaze con su año, su
+  cadena y su identificador, para copiarlo en una lista.
+
+## Escenas
+
+**Disparador «Episodio hoy»**: una serie seguida (en un calendario compartido) emite un episodio hoy.
+El filtro **Cuándo** elige el momento: **por la mañana** (9:00) o **a la hora de emisión** (también a
+las 9:00 para un episodio publicado sin hora). El filtro **Serie** toma el título exacto tal como
+aparece en el calendario; vacío, todas las series. Variables: serie, título del episodio, código
+(S02E10), temporada, número del episodio, cadena, fecha, hora de emisión y los usuarios que siguen la
+serie.
+
+**Disparador «Nuevo episodio anunciado»**: una serie seguida que no tenía próximo episodio recibe uno:
+nueva temporada con fecha, regreso tras una pausa. Las mismas variables, más los días restantes.
+
+**Acción «Leer el próximo episodio»**: el próximo episodio de una serie (su título o su comienzo;
+vacío: el más próximo de todas), con `found` (1 o 0), episodio, código, fecha, `days_left` (-1 sin
+fecha), cadena, estado de la serie y último episodio emitido.
+
+**Ejemplos**:
+
+- _Avisar al hogar el día de la emisión_: disparador «Episodio hoy», cuándo «Por la mañana», y luego
+  la acción de Gladys «Enviar un mensaje» a los usuarios que elija, con un texto construido con las
+  variables Serie, Código y Cadena tomadas de la lista. No se envía nada mientras no cree una escena
+  así.
+- _Bajar la luz a la hora de emisión_: disparador «Episodio hoy», cuándo «A la hora de emisión», serie
+  «The Simpsons», y luego una acción de iluminación.
+- _Recordatorio semanal_: una escena programada el domingo por la noche, la acción «Leer el próximo
+  episodio» y luego un mensaje con sus salidas Serie y Fecha.
+
+## Panel
+
+Añada el widget **Próximos episodios** a un panel. Ajustes: las series que mostrar (títulos exactos;
+vacío, todas las series compartidas), el periodo (7, 14 o 31 días) y si se muestra la situación de
+cada serie.
+
+## Límites
+
+- **Datos**: la guía de TVmaze. Las horas son las de la cadena original, convertidas a la zona horaria
+  de Gladys: una serie estadounidense emitida a las 20:00 en Nueva York aparece a las 2:00 en Madrid.
+  Las emisiones locales (una cadena española que emite una serie estadounidense) no están cubiertas.
+- **Actualización**: cada 6 horas y cuando un usuario cambia su lista. TVmaze admite 20 llamadas cada
+  10 segundos: la integración espacia sus llamadas y lee cada serie una sola vez, la sigan cuantos
+  usuarios la sigan.
+- Un episodio sin fecha de emisión (por anunciar) no entra en el calendario hasta que TVmaze lo fecha.
+- 500 episodios como máximo por calendario (mucho más que un año de series semanales).
+
+## Solución de problemas
+
+- **El calendario sigue vacío**: lea su descripción (página Calendario de Gladys). «No encontrada en
+  TVmaze» significa que el título no ha encontrado nada: búsquelo con la acción «Buscar una serie» y
+  use su identificador.
+- **No es la serie correcta**: escriba su identificador (`#1292`) en lugar del título.
+- **No se dispara ninguna escena**: el calendario debe estar compartido y el filtro de serie debe ser
+  el título exacto.
+- **«TVmaze inaccesible»**: la integración conserva los episodios ya conocidos y vuelve a intentarlo,
+  al cabo de un minuto y luego cada vez con menos frecuencia. Registros: página de la integración,
+  pestaña Registros (`LOG_LEVEL=debug` para más detalle).
+
+## Créditos
+
+Los datos de las series y los episodios, resúmenes incluidos, proceden de
+[TVmaze](https://www.tvmaze.com/api) bajo la licencia
+[CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/). Cada descripción de calendario y de
+evento cita a TVmaze.

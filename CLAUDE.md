@@ -9,15 +9,18 @@ A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
 no build step) that runs in its own sandboxed Docker container and talks to
 Gladys through
 [`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
-its only runtime dependency. It started from the official JavaScript template.
+its only runtime dependency. It is a `calendar`-type integration (Gladys
+5.2.0+): it reads the shows each user follows from TVmaze and pushes their
+episodes into the core calendar store, one calendar per user. It started from
+the official JavaScript template.
 
 ## Commands
 
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/sync.test.js             # one file
+node --test --test-name-pattern "widget"  # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +34,21 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
-src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler, the 6 h refresh, the daily slide, the 30 s air-time watcher
+src/syncer.js                     per user: the "TV shows" calendar, its window of episodes, write limiter
+src/catalog.js                    shows read from TVmaze, cached (6 h), title resolution, announcements
+src/tvmaze.js                     TVmaze client: spaced calls (600 ms), 429 retry, 404 -> null
+src/shows.js                      pure: show/episode normalization, status, seasons to read
+src/config.js                     DEFAULT_CONFIG (mirrors the manifest), parsing of a user's list
+src/scenes.js                     scene triggers (AirWatcher, announcements), scene action "next_episode"
+src/widgets.js                    dashboard widget "upcoming_episodes"
+src/i18n.js                       every text of the code, en/fr/de/es, date formatting
+src/time.js                       local-date arithmetic in TZ
+gladys-assistant-integration.json manifest: config_schema, account_schema, actions, scenes, widget
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/helpers/world.js             fake Gladys + TVmaze replayed from test/fixtures + clock, TZ=Europe/Paris
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +78,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: widget
+  texts, scene texts, calendar names and descriptions, action messages,
+  manifest texts, and `docs/{en,fr,de,es}.md` with the same sections.
+  `test/i18n.test.js` checks it.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -251,3 +261,41 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## TVmaze (propre à ce dépôt)
+
+- **Type `calendar`, pas `device`** : le brief demandait un calendrier **et** un appareil par série, mais un
+  type exclut l'autre (l'API des appareils répond 403 à un type `calendar`, celle des calendriers 403 à un
+  type `device`). Le calendrier l'emporte : vue calendrier native, déclencheur « un événement arrive » du
+  cœur, séries **par utilisateur** (`account_schema`). Les « capteurs » demandés (prochain épisode, jours
+  restants, statut, dernier épisode) passent par l'action `next_episode`, le widget et les déclencheurs.
+- **API** : `api.tvmaze.com`, sans clé, 20 appels / 10 s par IP (429 au-delà). Appels espacés de 600 ms,
+  un 429 attend `Retry-After` (10 s par défaut) puis réessaie deux fois. Par série :
+  `/shows/<id>?embed[]=nextepisode&embed[]=previousepisode&embed[]=seasons`, puis les saisons utiles
+  (`/seasons/<id>/episodes` : celle du prochain épisode et les suivantes, plus celle du précédent s'il a
+  moins de 14 jours, 3 au plus). Jamais `/shows/<id>/episodes` : 730 Ko pour les Simpson. Relecture toutes
+  les 6 h, une seule fois par série quel que soit le nombre d'abonnés ; 10 min de pause après un échec.
+- **Réponses réelles** : `airtime` vide = sortie sans heure (streaming), `airstamp` vaut alors 12:00 UTC
+  arbitraire → événement « journée entière » sur `airdate`, jamais l'`airstamp`. `airdate` vide = épisode
+  non daté, ignoré. Épisode spécial : `number: null` (code `S05 special`) ; le `previousepisode` de Breaking
+  Bad est le film El Camino (2019). `network` ou `webChannel` (Netflix, Apple TV) : l'un des deux, ou aucun.
+- **Recherche** : `/search/shows` (score), le meilleur résultat est retenu et mémorisé 7 jours ; les autres
+  séries **de même titre** sont listées dans la description du calendrier, avec leur identifiant. Aucune
+  liste dynamique possible dans `account_schema` (sources `devices`/`houses` seulement) : d'où les
+  identifiants `#526` et l'action admin « Chercher une série ».
+- **Ne pas effacer sur panne** : si une série de la liste ne peut être lue (TVmaze injoignable, rien en
+  cache), le calendrier est republié (description à jour) mais **pas sa fenêtre d'événements**, qui
+  effacerait les épisodes connus ; la synchronisation est reprise (1 min, puis ×2 jusqu'à 1 h).
+- Ids : calendrier `<user>:shows`, épisode `<user>:episode-<id TVmaze>` (stable même si la chaîne déplace
+  l'épisode). Fenêtre : J-14 à J+366, une requête, 500 événements au plus.
+- Déclencheur `episode_today` : un événement par (épisode, moment) parmi `morning` (9 h locale) et
+  `air_time` (9 h aussi pour une sortie sans heure), filtre `moment` **obligatoire** (vide, la scène
+  partirait deux fois). Tiré dans les 5 min (`FRESH_MS`), en mémoire seulement : un arrêt pendant le
+  moment le fait manquer, un redémarrage dans les 5 min peut le doubler.
+- `episode_announced` : comparaison avec la lecture précédente de la même série (pas de prochain épisode →
+  un prochain épisode futur). La première lecture après démarrage n'annonce rien.
+- Scènes et widget : calendriers **partagés** seulement, comme les scènes calendrier du cœur ; une série
+  suivie par deux utilisateurs n'émet qu'une fois (variable `users`).
+- Le message « le jour de la diffusion aux utilisateurs choisis » du brief n'est pas codé : une intégration
+  `calendar` ne peut pas écrire aux utilisateurs. C'est une scène (déclencheur + « Envoyer un message »),
+  documentée, donc désactivée tant que personne ne la crée.

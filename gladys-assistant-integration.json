@@ -1,101 +1,203 @@
 {
   "manifest_version": 1,
-  "type": "device",
-  "name": "Demo Devices Template",
+  "type": "calendar",
+  "name": "TVmaze",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Upcoming episodes of your TV shows in the Gladys calendar, dashboard and scenes.",
+    "fr": "Les prochains épisodes de vos séries dans le calendrier, les tableaux et les scènes.",
+    "de": "Die nächsten Folgen deiner Serien im Kalender, im Dashboard und in Szenen.",
+    "es": "Los próximos episodios de sus series en el calendario, los paneles y las escenas."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "docker_image": "ghcr.io/guim31/gladys-tvmaze:1.0.0",
+  "gladys_version": ">=5.2.0",
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-tvmaze/main/cover.png",
+  "categories": ["multimedia"],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "How it works",
+        "fr": "Fonctionnement",
+        "de": "So funktioniert es",
+        "es": "Funcionamiento"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Each user enables the integration below, under \"My calendars\", and lists the shows they follow. Their episodes fill a \"TV shows\" calendar. Share it with the household to see it on the dashboard and use it in scenes. Data: TVmaze, free, no account.",
+        "fr": "Chaque utilisateur active l'intégration plus bas, dans « Mes calendriers », et liste les séries qu'il suit. Leurs épisodes remplissent un calendrier « Séries TV ». Partagez-le avec le foyer pour le voir sur le tableau de bord et l'utiliser dans les scènes. Données : TVmaze, gratuit, sans compte.",
+        "de": "Jede Person aktiviert die Integration unten unter „Meine Kalender“ und listet die Serien auf, die sie verfolgt. Die Folgen füllen einen Kalender „Serien“. Teile ihn mit dem Haushalt, um ihn im Dashboard zu sehen und in Szenen zu nutzen. Daten: TVmaze, kostenlos, ohne Konto.",
+        "es": "Cada usuario activa la integración más abajo, en «Mis calendarios», y enumera las series que sigue. Sus episodios llenan un calendario «Series de TV». Compártalo con el hogar para verlo en el panel y usarlo en las escenas. Datos: TVmaze, gratuito, sin cuenta."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://www.tvmaze.com",
+          "label": {
+            "en": "TVmaze",
+            "fr": "TVmaze",
+            "de": "TVmaze",
+            "es": "TVmaze"
+          }
+        },
+        {
+          "url": "https://github.com/guim31/gladys-tvmaze#readme",
+          "label": {
+            "en": "Documentation",
+            "fr": "Documentation",
+            "de": "Dokumentation",
+            "es": "Documentación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
-      ]
-    },
-    {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "label": {
+        "en": "Language of the scene texts",
+        "fr": "Langue des textes des scènes",
+        "de": "Sprache der Szenentexte",
+        "es": "Idioma de los textos de las escenas"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Dates and statuses passed to the scenes. Calendars follow the language of each user.",
+        "fr": "Dates et statuts transmis aux scènes. Les calendriers suivent la langue de chaque utilisateur.",
+        "de": "Daten und Status für die Szenen. Die Kalender folgen der Sprache jeder Person.",
+        "es": "Fechas y estados enviados a las escenas. Los calendarios siguen el idioma de cada usuario."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
+    }
+  ],
+  "account_schema": [
+    {
+      "key": "intro",
+      "type": "section",
+      "label": {
+        "en": "Your shows",
+        "fr": "Vos séries",
+        "de": "Deine Serien",
+        "es": "Sus series"
+      },
+      "description": {
+        "en": "List the shows you follow: titles, TVmaze ids (#44933) or TVmaze addresses, separated by commas. A title takes the best TVmaze match: the description of your calendar says which one, and lists other shows with the same title. Share the calendar to use it in scenes and on the dashboard.",
+        "fr": "Listez les séries que vous suivez : titres, identifiants TVmaze (#44933) ou adresses TVmaze, séparés par des virgules. Un titre prend le meilleur résultat de TVmaze : la description de votre calendrier dit lequel, et liste les autres séries du même titre. Partagez le calendrier pour l'utiliser dans les scènes et sur le tableau de bord.",
+        "de": "Liste die Serien auf, die du verfolgst: Titel, TVmaze-IDs (#44933) oder TVmaze-Adressen, durch Kommas getrennt. Ein Titel nimmt den besten Treffer von TVmaze: Die Beschreibung deines Kalenders nennt ihn und listet andere Serien mit gleichem Titel. Teile den Kalender, um ihn in Szenen und im Dashboard zu nutzen.",
+        "es": "Enumere las series que sigue: títulos, identificadores de TVmaze (#44933) o direcciones de TVmaze, separados por comas. Un título toma el mejor resultado de TVmaze: la descripción de su calendario indica cuál y enumera otras series con el mismo título. Comparta el calendario para usarlo en las escenas y en el panel."
+      }
+    },
+    {
+      "key": "shows",
+      "type": "string",
+      "label": {
+        "en": "Shows followed",
+        "fr": "Séries suivies",
+        "de": "Verfolgte Serien",
+        "es": "Series seguidas"
+      },
+      "description": {
+        "en": "25 shows at most.",
+        "fr": "25 séries au plus.",
+        "de": "Höchstens 25 Serien.",
+        "es": "25 series como máximo."
+      },
+      "placeholder": {
+        "en": "e.g. Severance, The Simpsons, #526",
+        "fr": "ex. Severance, Les Simpson, #526",
+        "de": "z. B. Severance, Die Simpsons, #526",
+        "es": "p. ej. Severance, Los Simpson, #526"
+      },
+      "required": false,
+      "default": ""
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
+      "key": "check",
+      "label": {
+        "en": "Check",
+        "fr": "Vérifier",
+        "de": "Prüfen",
+        "es": "Comprobar"
+      },
+      "description": {
+        "en": "Reads TVmaze again now for every user, and counts the upcoming episodes.",
+        "fr": "Relit TVmaze maintenant pour tous les utilisateurs et compte les épisodes à venir.",
+        "de": "Liest TVmaze jetzt für alle Personen neu und zählt die kommenden Folgen.",
+        "es": "Vuelve a leer TVmaze ahora para todos los usuarios y cuenta los próximos episodios."
+      },
+      "timeout_seconds": 120
     },
     {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "search",
+      "label": {
+        "en": "Search a show",
+        "fr": "Chercher une série",
+        "de": "Serie suchen",
+        "es": "Buscar una serie"
+      },
+      "description": {
+        "en": "Shows the best TVmaze matches of a title, with their ids.",
+        "fr": "Affiche les meilleurs résultats de TVmaze pour un titre, avec leurs identifiants.",
+        "de": "Zeigt die besten Treffer von TVmaze für einen Titel, mit ihren IDs.",
+        "es": "Muestra los mejores resultados de TVmaze para un título, con sus identificadores."
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "key": "query",
+          "type": "string",
+          "label": {
+            "en": "Title",
+            "fr": "Titre",
+            "de": "Titel",
+            "es": "Título"
+          },
+          "placeholder": {
+            "en": "e.g. The Office",
+            "fr": "ex. The Office",
+            "de": "z. B. The Office",
+            "es": "p. ej. The Office"
+          },
           "required": true
         }
       ]
@@ -103,75 +205,535 @@
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "episode_today",
+      "label": {
+        "en": "Episode today",
+        "fr": "Épisode aujourd'hui",
+        "de": "Folge heute",
+        "es": "Episodio hoy"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A followed show airs an episode today: in the morning (09:00) or at its air time. Add a message action to tell the users you choose.",
+        "fr": "Une série suivie diffuse un épisode aujourd'hui : le matin (9 h) ou à l'heure de diffusion. Ajoutez une action de message pour prévenir les utilisateurs choisis.",
+        "de": "Eine verfolgte Serie zeigt heute eine Folge: morgens (9:00) oder zur Sendezeit. Füge eine Nachrichtenaktion hinzu, um die gewählten Personen zu informieren.",
+        "es": "Una serie seguida emite un episodio hoy: por la mañana (9:00) o a su hora de emisión. Añada una acción de mensaje para avisar a los usuarios que elija."
       },
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "key": "show",
+          "type": "string",
+          "label": {
+            "en": "Show",
+            "fr": "Série",
+            "de": "Serie",
+            "es": "Serie"
+          },
+          "description": {
+            "en": "Exact title, as in the calendar. Empty: every shared show.",
+            "fr": "Titre exact, comme dans le calendrier. Vide : toutes les séries partagées.",
+            "de": "Genauer Titel wie im Kalender. Leer: alle geteilten Serien.",
+            "es": "Título exacto, como en el calendario. Vacío: todas las series compartidas."
+          },
+          "placeholder": {
+            "en": "e.g. Severance",
+            "fr": "ex. Severance",
+            "de": "z. B. Severance",
+            "es": "p. ej. Severance"
+          }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "moment",
+          "type": "select",
+          "label": {
+            "en": "When",
+            "fr": "Quand",
+            "de": "Wann",
+            "es": "Cuándo"
+          },
+          "required": true,
+          "default": "morning",
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "morning",
+              "label": {
+                "en": "In the morning (09:00)",
+                "fr": "Le matin (9 h)",
+                "de": "Morgens (9:00)",
+                "es": "Por la mañana (9:00)"
+              }
+            },
+            {
+              "value": "air_time",
+              "label": {
+                "en": "At the air time",
+                "fr": "À l'heure de diffusion",
+                "de": "Zur Sendezeit",
+                "es": "A la hora de emisión"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "show",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Show",
+            "fr": "Série",
+            "de": "Serie",
+            "es": "Serie"
+          }
+        },
+        {
+          "key": "episode",
+          "type": "string",
+          "label": {
+            "en": "Episode title",
+            "fr": "Titre de l'épisode",
+            "de": "Titel der Folge",
+            "es": "Título del episodio"
+          }
+        },
+        {
+          "key": "code",
+          "type": "string",
+          "label": {
+            "en": "Season and episode (S02E10)",
+            "fr": "Saison et épisode (S02E10)",
+            "de": "Staffel und Folge (S02E10)",
+            "es": "Temporada y episodio (S02E10)"
+          }
+        },
+        {
+          "key": "season",
+          "type": "number",
+          "label": {
+            "en": "Season",
+            "fr": "Saison",
+            "de": "Staffel",
+            "es": "Temporada"
+          }
+        },
+        {
+          "key": "number",
+          "type": "number",
+          "label": {
+            "en": "Episode number",
+            "fr": "Numéro de l'épisode",
+            "de": "Nummer der Folge",
+            "es": "Número del episodio"
+          }
+        },
+        {
+          "key": "channel",
+          "type": "string",
+          "label": {
+            "en": "Channel or platform",
+            "fr": "Chaîne ou plateforme",
+            "de": "Sender oder Plattform",
+            "es": "Cadena o plataforma"
+          }
+        },
+        {
+          "key": "date",
+          "type": "string",
+          "label": {
+            "en": "Air date",
+            "fr": "Date de diffusion",
+            "de": "Ausstrahlung",
+            "es": "Fecha de emisión"
+          }
+        },
+        {
+          "key": "time",
+          "type": "string",
+          "label": {
+            "en": "Air time (empty if none)",
+            "fr": "Heure de diffusion (vide si aucune)",
+            "de": "Sendezeit (leer, wenn keine)",
+            "es": "Hora de emisión (vacía si no hay)"
+          }
+        },
+        {
+          "key": "users",
+          "type": "string",
+          "label": {
+            "en": "Followed by",
+            "fr": "Suivie par",
+            "de": "Verfolgt von",
+            "es": "Seguida por"
+          }
+        }
+      ]
+    },
+    {
+      "key": "episode_announced",
+      "label": {
+        "en": "New episode announced",
+        "fr": "Nouvel épisode annoncé",
+        "de": "Neue Folge angekündigt",
+        "es": "Nuevo episodio anunciado"
+      },
+      "description": {
+        "en": "A followed show without a next episode gets one: a new season dated, a return from a break.",
+        "fr": "Une série suivie sans prochain épisode en reçoit un : nouvelle saison datée, retour de pause.",
+        "de": "Eine verfolgte Serie ohne nächste Folge bekommt eine: neue Staffel datiert, Rückkehr nach einer Pause.",
+        "es": "Una serie seguida sin próximo episodio recibe uno: nueva temporada con fecha, regreso tras una pausa."
+      },
+      "fields": [
+        {
+          "key": "show",
+          "type": "string",
+          "label": {
+            "en": "Show",
+            "fr": "Série",
+            "de": "Serie",
+            "es": "Serie"
+          },
+          "description": {
+            "en": "Exact title, as in the calendar. Empty: every shared show.",
+            "fr": "Titre exact, comme dans le calendrier. Vide : toutes les séries partagées.",
+            "de": "Genauer Titel wie im Kalender. Leer: alle geteilten Serien.",
+            "es": "Título exacto, como en el calendario. Vacío: todas las series compartidas."
+          },
+          "placeholder": {
+            "en": "e.g. Severance",
+            "fr": "ex. Severance",
+            "de": "z. B. Severance",
+            "es": "p. ej. Severance"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "show",
+          "type": "string",
+          "label": {
+            "en": "Show",
+            "fr": "Série",
+            "de": "Serie",
+            "es": "Serie"
+          }
+        },
+        {
+          "key": "episode",
+          "type": "string",
+          "label": {
+            "en": "Episode title",
+            "fr": "Titre de l'épisode",
+            "de": "Titel der Folge",
+            "es": "Título del episodio"
+          }
+        },
+        {
+          "key": "code",
+          "type": "string",
+          "label": {
+            "en": "Season and episode (S02E10)",
+            "fr": "Saison et épisode (S02E10)",
+            "de": "Staffel und Folge (S02E10)",
+            "es": "Temporada y episodio (S02E10)"
+          }
+        },
+        {
+          "key": "season",
+          "type": "number",
+          "label": {
+            "en": "Season",
+            "fr": "Saison",
+            "de": "Staffel",
+            "es": "Temporada"
+          }
+        },
+        {
+          "key": "number",
+          "type": "number",
+          "label": {
+            "en": "Episode number",
+            "fr": "Numéro de l'épisode",
+            "de": "Nummer der Folge",
+            "es": "Número del episodio"
+          }
+        },
+        {
+          "key": "channel",
+          "type": "string",
+          "label": {
+            "en": "Channel or platform",
+            "fr": "Chaîne ou plateforme",
+            "de": "Sender oder Plattform",
+            "es": "Cadena o plataforma"
+          }
+        },
+        {
+          "key": "date",
+          "type": "string",
+          "label": {
+            "en": "Air date",
+            "fr": "Date de diffusion",
+            "de": "Ausstrahlung",
+            "es": "Fecha de emisión"
+          }
+        },
+        {
+          "key": "time",
+          "type": "string",
+          "label": {
+            "en": "Air time (empty if none)",
+            "fr": "Heure de diffusion (vide si aucune)",
+            "de": "Sendezeit (leer, wenn keine)",
+            "es": "Hora de emisión (vacía si no hay)"
+          }
+        },
+        {
+          "key": "days_left",
+          "type": "number",
+          "label": {
+            "en": "Days left",
+            "fr": "Jours restants",
+            "de": "Verbleibende Tage",
+            "es": "Días restantes"
+          }
+        },
+        {
+          "key": "users",
+          "type": "string",
+          "label": {
+            "en": "Followed by",
+            "fr": "Suivie par",
+            "de": "Verfolgt von",
+            "es": "Seguida por"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "next_episode",
+      "label": {
+        "en": "Read the next episode",
+        "fr": "Lire le prochain épisode",
+        "de": "Nächste Folge lesen",
+        "es": "Leer el próximo episodio"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "The next episode of a shared show, the days left and the status of the show.",
+        "fr": "Le prochain épisode d'une série partagée, les jours restants et le statut de la série.",
+        "de": "Die nächste Folge einer geteilten Serie, die verbleibenden Tage und der Status der Serie.",
+        "es": "El próximo episodio de una serie compartida, los días restantes y el estado de la serie."
+      },
+      "timeout_seconds": 10,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "key": "show",
+          "type": "string",
+          "label": {
+            "en": "Show",
+            "fr": "Série",
+            "de": "Serie",
+            "es": "Serie"
+          },
+          "description": {
+            "en": "Title, or its beginning. Empty: the soonest episode of all shared shows.",
+            "fr": "Titre, ou son début. Vide : l'épisode le plus proche de toutes les séries partagées.",
+            "de": "Titel oder sein Anfang. Leer: die nächste Folge aller geteilten Serien.",
+            "es": "Título, o su comienzo. Vacío: el episodio más próximo de todas las series compartidas."
+          },
+          "placeholder": {
+            "en": "e.g. Severance",
+            "fr": "ex. Severance",
+            "de": "z. B. Severance",
+            "es": "p. ej. Severance"
+          }
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "found",
+          "type": "number",
+          "label": {
+            "en": "Show found (1) or not (0)",
+            "fr": "Série trouvée (1) ou non (0)",
+            "de": "Serie gefunden (1) oder nicht (0)",
+            "es": "Serie encontrada (1) o no (0)"
+          }
+        },
+        {
+          "key": "show",
+          "type": "string",
+          "label": {
+            "en": "Show",
+            "fr": "Série",
+            "de": "Serie",
+            "es": "Serie"
+          }
+        },
+        {
+          "key": "episode",
+          "type": "string",
+          "label": {
+            "en": "Episode title",
+            "fr": "Titre de l'épisode",
+            "de": "Titel der Folge",
+            "es": "Título del episodio"
+          }
+        },
+        {
+          "key": "code",
+          "type": "string",
+          "label": {
+            "en": "Season and episode (S02E10)",
+            "fr": "Saison et épisode (S02E10)",
+            "de": "Staffel und Folge (S02E10)",
+            "es": "Temporada y episodio (S02E10)"
+          }
+        },
+        {
+          "key": "date",
+          "type": "string",
+          "label": {
+            "en": "Air date",
+            "fr": "Date de diffusion",
+            "de": "Ausstrahlung",
+            "es": "Fecha de emisión"
+          }
+        },
+        {
+          "key": "days_left",
+          "type": "number",
+          "label": {
+            "en": "Days left (-1: no date)",
+            "fr": "Jours restants (-1 : sans date)",
+            "de": "Verbleibende Tage (-1: ohne Termin)",
+            "es": "Días restantes (-1: sin fecha)"
+          }
+        },
+        {
+          "key": "channel",
+          "type": "string",
+          "label": {
+            "en": "Channel or platform",
+            "fr": "Chaîne ou plateforme",
+            "de": "Sender oder Plattform",
+            "es": "Cadena o plataforma"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "Status of the show",
+            "fr": "Statut de la série",
+            "de": "Status der Serie",
+            "es": "Estado de la serie"
+          }
+        },
+        {
+          "key": "last_episode",
+          "type": "string",
+          "label": {
+            "en": "Last episode aired",
+            "fr": "Dernier épisode diffusé",
+            "de": "Zuletzt gesendete Folge",
+            "es": "Último episodio emitido"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "upcoming_episodes",
+      "label": {
+        "en": "Upcoming episodes",
+        "fr": "Prochains épisodes",
+        "de": "Nächste Folgen",
+        "es": "Próximos episodios"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "The coming episodes of the shared shows, and where each show stands.",
+        "fr": "Les prochains épisodes des séries partagées, et où en est chaque série.",
+        "de": "Die nächsten Folgen der geteilten Serien und der Stand jeder Serie.",
+        "es": "Los próximos episodios de las series compartidas y la situación de cada serie."
+      },
+      "icon": "tv",
+      "settings": [
+        {
+          "key": "shows",
+          "type": "string",
+          "label": {
+            "en": "Shows",
+            "fr": "Séries",
+            "de": "Serien",
+            "es": "Series"
+          },
+          "description": {
+            "en": "Exact titles, separated by commas. Empty: every shared show.",
+            "fr": "Titres exacts, séparés par des virgules. Vide : toutes les séries partagées.",
+            "de": "Genaue Titel, durch Kommas getrennt. Leer: alle geteilten Serien.",
+            "es": "Títulos exactos, separados por comas. Vacío: todas las series compartidas."
+          },
+          "placeholder": {
+            "en": "e.g. Severance, The Simpsons",
+            "fr": "ex. Severance, Les Simpson",
+            "de": "z. B. Severance, Die Simpsons",
+            "es": "p. ej. Severance, Los Simpson"
+          }
+        },
+        {
+          "key": "days",
+          "type": "select",
+          "label": {
+            "en": "Period",
+            "fr": "Période",
+            "de": "Zeitraum",
+            "es": "Periodo"
+          },
+          "default": "14",
+          "options": [
+            {
+              "value": "7",
+              "label": {
+                "en": "7 days",
+                "fr": "7 jours",
+                "de": "7 Tage",
+                "es": "7 días"
+              }
+            },
+            {
+              "value": "14",
+              "label": {
+                "en": "14 days",
+                "fr": "14 jours",
+                "de": "14 Tage",
+                "es": "14 días"
+              }
+            },
+            {
+              "value": "31",
+              "label": {
+                "en": "31 days",
+                "fr": "31 jours",
+                "de": "31 Tage",
+                "es": "31 días"
+              }
+            }
+          ]
+        },
+        {
+          "key": "show_status",
+          "type": "boolean",
+          "label": {
+            "en": "Show the status of each show",
+            "fr": "Afficher l'état de chaque série",
+            "de": "Stand jeder Serie anzeigen",
+            "es": "Mostrar la situación de cada serie"
+          },
+          "default": true
+        }
+      ]
     }
   ]
 }

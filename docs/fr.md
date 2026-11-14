@@ -1,67 +1,118 @@
-# Template de démonstration
+# TVmaze
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Les prochains épisodes de vos séries dans Gladys, d'après [TVmaze](https://www.tvmaze.com), un guide
+TV gratuit : un calendrier par utilisateur, un widget de tableau de bord et des déclencheurs de scène.
+Pas de compte, pas de clé d'API.
+
+Cette intégration n'est pas affiliée à TVmaze. Elle a été testée contre la vraie API de TVmaze et la
+doublure de test de Gladys, pas encore sur une vraie instance Gladys : vos retours sont les bienvenus
+sur le forum ou sur GitHub.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- **Un calendrier « Séries TV » par utilisateur**, dans le calendrier de Gladys : chaque épisode des
+  séries que vous suivez, de deux semaines en arrière à un an en avant, avec sa saison et son numéro
+  (S02E10), son titre, sa chaîne ou sa plateforme (FOX, Apple TV, Netflix…) comme lieu, et son
+  résumé. Un épisode avec une heure de diffusion dure sa durée ; un épisode publié sans heure (en
+  streaming, le plus souvent) occupe toute la journée.
+- **Un widget de tableau de bord**, « Prochains épisodes » : les épisodes à venir, puis où en est
+  chaque série (prochain épisode dans 3 jours, terminée, en cours sans date).
+- **Deux déclencheurs de scène** : un épisode d'une série suivie passe aujourd'hui (le matin ou à
+  l'heure de diffusion), et un nouvel épisode est annoncé pour une série qui n'en avait plus.
+- **Une action de scène**, « Lire le prochain épisode » : le prochain épisode d'une série, les jours
+  restants et le statut de la série.
+
+La vue calendrier, le calendrier du tableau de bord et le déclencheur intégré « un événement du
+calendrier arrive » de Gladys fonctionnent aussi avec ces calendriers une fois partagés.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+**Chaque utilisateur** active l'intégration sur sa page, dans « Mes calendriers », et liste les
+séries qu'il suit dans **Séries suivies**, séparées par des virgules :
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+- un **titre** : `Severance`, `The Simpsons`. Le meilleur résultat de TVmaze est retenu ;
+- un **identifiant TVmaze** : `#526` (ou `526`) ;
+- une **adresse TVmaze** : `https://www.tvmaze.com/shows/526/the-office`.
+
+La description de votre calendrier dit quelle série chaque titre a trouvée (année, chaîne,
+identifiant), les titres inconnus de TVmaze, et les autres séries du même titre : « The Office »
+trouve la série américaine de 2005 (#526), la britannique de 2001 est #1292. Pour en choisir une
+autre, écrivez son identifiant à la place du titre. 25 séries au plus par utilisateur.
+
+Le calendrier est d'abord **privé**. **Partagez-le** (l'interrupteur dans « Mes calendriers ») pour le
+voir sur le tableau de bord et l'utiliser dans les scènes : comme tout calendrier de Gladys, seuls les
+calendriers partagés atteignent les scènes, et un calendrier partagé est visible de tout le foyer.
+
+L'**administrateur** choisit la langue des dates et des statuts transmis aux scènes. Le nom et la
+description des calendriers suivent la langue de chaque utilisateur.
 
 ## Actions
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+Sur la page de l'intégration, pour l'administrateur :
+
+- **Vérifier** : relit TVmaze maintenant pour tous les utilisateurs, et dit combien de séries et
+  d'épisodes à venir ont été lus.
+- **Chercher une série** : saisissez un titre, obtenez les meilleurs résultats de TVmaze avec leur
+  année, leur chaîne et leur identifiant, à recopier dans une liste.
 
 ## Scènes
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+**Déclencheur « Épisode aujourd'hui »** : une série suivie (sur un calendrier partagé) diffuse un
+épisode aujourd'hui. Le filtre **Quand** choisit le moment : **le matin** (9 h), ou **à l'heure de
+diffusion** (9 h aussi pour un épisode publié sans heure). Le filtre **Série** prend le titre exact
+tel qu'il apparaît dans le calendrier ; vide, toutes les séries. Variables : série, titre de
+l'épisode, code (S02E10), saison, numéro de l'épisode, chaîne, date, heure de diffusion, et les
+utilisateurs qui suivent la série.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+**Déclencheur « Nouvel épisode annoncé »** : une série suivie qui n'avait pas de prochain épisode en
+reçoit un : nouvelle saison datée, retour de pause. Mêmes variables, plus les jours restants.
+
+**Action « Lire le prochain épisode »** : le prochain épisode d'une série (son titre ou son début ;
+vide : le plus proche de toutes), avec `found` (1 ou 0), épisode, code, date, `days_left` (-1 sans
+date), chaîne, statut de la série et dernier épisode diffusé.
+
+**Exemples** :
+
+- _Prévenir le foyer le jour de la diffusion_ : déclencheur « Épisode aujourd'hui », quand « Le
+  matin », puis l'action Gladys « Envoyer un message » aux utilisateurs choisis, son texte construit
+  avec les variables Série, Code et Chaîne prises dans la liste. Rien n'est envoyé tant que vous ne
+  créez pas une telle scène.
+- _Baisser la lumière à l'heure de diffusion_ : déclencheur « Épisode aujourd'hui », quand « À l'heure
+  de diffusion », série « The Simpsons », puis une action d'éclairage.
+- _Rappel de la semaine_ : une scène planifiée le dimanche soir, l'action « Lire le prochain
+  épisode », puis un message avec ses sorties Série et Date.
 
 ## Tableau de bord
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Ajoutez le widget **Prochains épisodes** à un tableau de bord. Réglages : les séries à afficher
+(titres exacts ; vide, toutes les séries partagées), la période (7, 14 ou 31 jours) et l'affichage ou
+non de l'état de chaque série.
+
+## Limites
+
+- **Données** : le guide de TVmaze. Les heures sont celles de la chaîne d'origine, converties dans le
+  fuseau de Gladys : une série américaine diffusée à 20 h à New York apparaît à 2 h à Paris. Les
+  diffusions locales (une chaîne française qui passe une série américaine) ne sont pas couvertes.
+- **Rafraîchissement** : toutes les 6 heures, et quand un utilisateur modifie sa liste. TVmaze accepte
+  20 appels toutes les 10 secondes : l'intégration espace ses appels et lit chaque série une seule
+  fois, quel que soit le nombre d'utilisateurs qui la suivent.
+- Un épisode sans date de diffusion (à venir) n'entre dans le calendrier qu'une fois daté par TVmaze.
+- 500 épisodes au plus par calendrier (bien au-delà d'un an de séries hebdomadaires).
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **Le calendrier reste vide** : lisez sa description (page Calendrier de Gladys). « Introuvable sur
+  TVmaze » veut dire que le titre n'a rien trouvé : cherchez-le avec l'action « Chercher une série »
+  et utilisez son identifiant.
+- **Ce n'est pas la bonne série** : écrivez son identifiant (`#1292`) à la place du titre.
+- **Aucune scène ne se déclenche** : le calendrier doit être partagé, et le filtre de série doit être
+  le titre exact.
+- **« TVmaze injoignable »** : l'intégration garde les épisodes déjà connus et réessaie, après une
+  minute puis de moins en moins souvent. Journaux : page de l'intégration, onglet Journaux
+  (`LOG_LEVEL=debug` pour plus de détail).
+
+## Crédits
+
+Les données des séries et des épisodes, résumés compris, viennent de
+[TVmaze](https://www.tvmaze.com/api) sous licence [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/).
+Chaque description de calendrier et d'événement cite TVmaze.
