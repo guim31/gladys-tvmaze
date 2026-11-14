@@ -1,0 +1,94 @@
+[
+  {
+    "score": 0.8900336,
+    "show": {
+      "id": 44933,
+      "url": "https://www.tvmaze.com/shows/44933/severance",
+      "name": "Severance",
+      "type": "Scripted",
+      "language": "English",
+      "status": "Running",
+      "runtime": null,
+      "averageRuntime": 49,
+      "premiered": "2022-02-18",
+      "ended": null,
+      "officialSite": "https://tv.apple.com/show/severance/umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
+      "schedule": {
+        "time": "",
+        "days": ["Friday"]
+      },
+      "network": null,
+      "webChannel": {
+        "id": 310,
+        "name": "Apple TV",
+        "country": null,
+        "officialSite": "https://tv.apple.com/"
+      },
+      "updated": 1790712623
+    }
+  },
+  {
+    "score": 0.2847545,
+    "show": {
+      "id": 85532,
+      "url": "https://www.tvmaze.com/shows/85532/aligned-reverence",
+      "name": "Aligned Reverence",
+      "type": "Scripted",
+      "language": "Chinese",
+      "status": "Ended",
+      "runtime": null,
+      "averageRuntime": 17,
+      "premiered": "2025-12-05",
+      "ended": "2025-12-12",
+      "officialSite": "https://v.qq.com/x/cover/mzc002001qhoz7l.html",
+      "schedule": {
+        "time": "12:00",
+        "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+      },
+      "network": null,
+      "webChannel": {
+        "id": 104,
+        "name": "Tencent QQ",
+        "country": {
+          "name": "China",
+          "code": "CN",
+          "timezone": "Asia/Shanghai"
+        },
+        "officialSite": "https://v.qq.com/"
+      },
+      "updated": 1765897752
+    }
+  },
+  {
+    "score": 0.22522487,
+    "show": {
+      "id": 70294,
+      "url": "https://www.tvmaze.com/shows/70294/la-riviere-esperance",
+      "name": "La Rivière Espérance",
+      "type": "Scripted",
+      "language": "French",
+      "status": "Ended",
+      "runtime": 90,
+      "averageRuntime": 90,
+      "premiered": "1995-09-04",
+      "ended": "1995-10-23",
+      "officialSite": null,
+      "schedule": {
+        "time": "",
+        "days": ["Monday"]
+      },
+      "network": {
+        "id": 106,
+        "name": "France 2",
+        "country": {
+          "name": "France",
+          "code": "FR",
+          "timezone": "Europe/Paris"
+        },
+        "officialSite": "https://www.france2.fr/"
+      },
+      "webChannel": null,
+      "updated": 1704795484
+    }
+  }
+]

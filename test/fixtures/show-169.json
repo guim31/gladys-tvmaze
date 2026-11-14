@@ -1,0 +1,76 @@
+{
+  "id": 169,
+  "url": "https://www.tvmaze.com/shows/169/breaking-bad",
+  "name": "Breaking Bad",
+  "type": "Scripted",
+  "language": "English",
+  "status": "Ended",
+  "runtime": 60,
+  "averageRuntime": 60,
+  "premiered": "2008-01-20",
+  "ended": "2019-10-11",
+  "officialSite": "http://www.amc.com/shows/breaking-bad",
+  "schedule": {
+    "time": "22:00",
+    "days": ["Sunday"]
+  },
+  "network": {
+    "id": 20,
+    "name": "AMC",
+    "country": {
+      "name": "United States",
+      "code": "US",
+      "timezone": "America/New_York"
+    },
+    "officialSite": null
+  },
+  "webChannel": null,
+  "updated": 1792795009,
+  "_embedded": {
+    "previousepisode": {
+      "id": 2007806,
+      "url": "https://www.tvmaze.com/episodes/2007806/breaking-bad-s05-special-el-camino-a-breaking-bad-movie",
+      "name": "El Camino: A Breaking Bad Movie",
+      "season": 5,
+      "number": null,
+      "type": "significant_special",
+      "airdate": "2019-10-11",
+      "airtime": "22:00",
+      "airstamp": "2019-10-12T02:00:00+00:00",
+      "runtime": 122,
+      "summary": "<p>Fugitive Jesse Pinkman attempts to outrun his past.</p>"
+    },
+    "seasons": [
+      {
+        "id": 753,
+        "number": 1,
+        "premiereDate": "2008-01-20",
+        "endDate": "2008-03-09"
+      },
+      {
+        "id": 754,
+        "number": 2,
+        "premiereDate": "2009-03-08",
+        "endDate": "2009-05-31"
+      },
+      {
+        "id": 755,
+        "number": 3,
+        "premiereDate": "2010-03-21",
+        "endDate": "2010-06-13"
+      },
+      {
+        "id": 756,
+        "number": 4,
+        "premiereDate": "2011-07-17",
+        "endDate": "2011-10-09"
+      },
+      {
+        "id": 757,
+        "number": 5,
+        "premiereDate": "2012-07-15",
+        "endDate": "2019-10-11"
+      }
+    ]
+  }
+}

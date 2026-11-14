@@ -1,93 +1,192 @@
+// -----------------------------------------------------------------------------
+// Scene triggers, the scene action and the widget, on the shared calendars.
+// The Simpsons S38E07 airs Monday 16 November 2026 at 01:30 UTC, 02:30 in
+// Paris (fixtures).
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { DEVICE_BLUEPRINTS } from '../src/devices/index.js';
-import { MOTION_DETECTED_TRIGGER, motionSensor } from '../src/devices/motionSensor.js';
-import { SCENE_ACTIONS } from '../src/scenes.js';
-import { normalizeConfig } from '../src/config.js';
+import { validateWidgetContent } from '@gladysassistant/integration-sdk';
+import { account, createWorld, fakeTvMaze, fixture } from './helpers/world.js';
+import { TRIGGERS } from '../src/scenes.js';
+import { SHOWS_WIDGET } from '../src/widgets.js';
 
-const manifest = JSON.parse(
-  await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
-);
-const config = normalizeConfig();
+async function sharedWorld(options = {}) {
+  const world = await createWorld({
+    accounts: [account('alice', '#83, #169, Severance')],
+    ...options,
+  });
+  await world.share('alice');
+  return world;
+}
 
-const declarationOf = (list, key) => manifest[list].find((entry) => entry.key === key);
-const keysOf = (list) => (list ?? []).map((entry) => entry.key);
-const deviceIdOf = (gladys, key) =>
-  DEVICE_BLUEPRINTS.find((bp) => bp.key === key).deviceExternalId(gladys);
+const at = (iso) => Date.parse(iso);
 
-// Let the async interval callback run to completion.
-const flush = () => new Promise((resolve) => setImmediate(resolve));
-
-test('the motion sensor fires one motion_detected event per detection, none on the clear', async (t) => {
-  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
-  const gladys = createFakeGladys();
-  const stopPush = motionSensor.startPush(gladys, config);
-  try {
-    t.mock.timers.tick(60_000);
-    await flush();
-    assert.equal(gladys.fake.sceneEvents.length, 1, 'one detection, one event');
-    assert.equal(gladys.fake.sceneEvents[0].key, MOTION_DETECTED_TRIGGER);
-    assert.equal(gladys.fake.states.at(-1).state, 1, 'the state is still published');
-
-    t.mock.timers.tick(10_000);
-    await flush();
-    assert.equal(gladys.fake.states.at(-1).state, 0, 'the detection is cleared');
-    assert.equal(gladys.fake.sceneEvents.length, 1, 'the clear fires no event');
-  } finally {
-    stopPush();
-  }
+test('"episode today" fires in the morning and at the air time, once each', async () => {
+  const world = await sharedWorld();
+  world.clock.now = at('2026-11-16T01:30:20Z');
+  assert.equal(await world.app.tick(), 1);
+  world.clock.now = at('2026-11-16T01:31:00Z');
+  assert.equal(await world.app.tick(), 0, 'once');
+  world.clock.now = at('2026-11-16T08:00:10Z'); // 09:00 in Paris
+  assert.equal(await world.app.tick(), 1);
+  const events = world.fake.sceneEvents;
+  assert.deepEqual(
+    events.map((event) => [event.key, event.data.moment]),
+    [
+      [TRIGGERS.EPISODE_TODAY, 'air_time'],
+      [TRIGGERS.EPISODE_TODAY, 'morning'],
+    ],
+  );
+  assert.deepEqual(events[1].data, {
+    show: 'The Simpsons',
+    episode: 'Dream Scenari-Moe',
+    code: 'S38E07',
+    season: 38,
+    number: 7,
+    channel: 'FOX',
+    date: 'lun. 16 nov., 02:30',
+    time: '02:30',
+    moment: 'morning',
+    users: 'Alice',
+  });
 });
 
-test('motion_detected data only carries keys the trigger declares', async (t) => {
-  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
-  const gladys = createFakeGladys();
-  const stopPush = motionSensor.startPush(gladys, config);
-  try {
-    t.mock.timers.tick(60_000);
-    await flush();
-  } finally {
-    stopPush();
-  }
-  const [{ data }] = gladys.fake.sceneEvents;
-  const trigger = declarationOf('scene_triggers', MOTION_DETECTED_TRIGGER);
-  // The core keeps the `fields` keys (filters) and the `variables` keys
-  // (exposed to the scene): any other key would be silently dropped.
-  const declared = [...keysOf(trigger.fields), ...keysOf(trigger.variables)];
-  for (const [key, value] of Object.entries(data)) {
-    assert.ok(declared.includes(key), `data.${key} is not declared, the core would drop it`);
-    assert.ok(value === null || typeof value !== 'object', `data.${key} must be a primitive`);
-  }
-  // A `"source": "devices"` filter stores a device external_id.
-  assert.equal(data.device, deviceIdOf(gladys, 'motion-sensor'));
-  const targets = trigger.fields.find((field) => field.key === 'target').options;
-  assert.ok(
-    targets.some((option) => option.value === data.target),
-    `data.target "${data.target}" must be one of the filter options`,
+test('a restart after the moment fires nothing, a private calendar neither', async () => {
+  const late = await sharedWorld({ now: at('2026-11-16T08:20:00Z') });
+  assert.equal(await late.app.tick(), 0);
+  const world = await createWorld({ accounts: [account('alice', '#83')] });
+  world.clock.now = at('2026-11-16T08:00:10Z');
+  assert.equal(await world.app.tick(), 0, 'not shared');
+});
+
+test('"episode announced" fires when a show without a date gets one', async () => {
+  const show = fixture('show-44933');
+  const api = fakeTvMaze({ '/shows/44933': () => show });
+  const world = await sharedWorld({ api });
+  assert.equal(world.fake.sceneEvents.length, 0, 'the first reading announces nothing');
+  show._embedded.nextepisode = {
+    ...show._embedded.previousepisode,
+    id: 9_000_001,
+    name: 'Season 3 premiere',
+    season: 3,
+    number: 1,
+    airdate: '2026-11-20',
+    airtime: '',
+    airstamp: '2026-11-20T12:00:00+00:00',
+  };
+  world.clock.now += 6 * 3_600_000;
+  await world.app.refresh();
+  await world.app.idle();
+  const [event] = world.fake.sceneEvents;
+  assert.equal(event.key, TRIGGERS.EPISODE_ANNOUNCED);
+  assert.equal(event.data.show, 'Severance');
+  assert.equal(event.data.code, 'S03E01');
+  assert.equal(event.data.days_left, 5);
+  assert.equal(event.data.time, '');
+  assert.ok(world.eventsOf('alice').some((entry) => entry.name.startsWith('Severance S03E01')));
+});
+
+test('"episode announced" also fires when the last known episode has aired', async () => {
+  const show = fixture('show-83');
+  const api = fakeTvMaze({ '/shows/83': () => show });
+  const world = await sharedWorld({ api });
+  // Read on 14 November, the next episode was S38E07. By 10 December the
+  // season finale (7 December) aired, and TVmaze dates the next season.
+  show._embedded.nextepisode = {
+    ...show._embedded.previousepisode,
+    id: 9_000_002,
+    name: 'Season 39 premiere',
+    season: 39,
+    number: 1,
+    airdate: '2027-01-10',
+    airtime: '20:00',
+    airstamp: '2027-01-11T01:00:00+00:00',
+  };
+  world.clock.now = Date.parse('2026-12-10T17:00:00Z');
+  await world.app.refresh();
+  await world.app.idle();
+  assert.deepEqual(
+    world.fake.sceneEvents.map((event) => [event.key, event.data.code, event.data.days_left]),
+    [[TRIGGERS.EPISODE_ANNOUNCED, 'S39E01', 32]],
   );
 });
 
-test('identify_device signals the chosen device and returns the declared outputs', async () => {
-  const gladys = createFakeGladys();
-  const outputs = await SCENE_ACTIONS.identify_device(gladys, {
-    fields: { device: deviceIdOf(gladys, 'light') },
-    config,
-  });
-  assert.deepEqual(outputs, { signalled: true });
-  const declared = keysOf(declarationOf('scene_actions', 'identify_device').outputs);
-  for (const key of Object.keys(outputs)) {
-    assert.ok(declared.includes(key), `output "${key}" is not declared, the core would drop it`);
-  }
+test('a show dated one episode at a time is not announced at every episode', async () => {
+  const show = fixture('show-83');
+  const api = fakeTvMaze({ '/shows/83': () => show });
+  const world = await sharedWorld({ api });
+  // 8 December: the finale aired yesterday, TVmaze dates an episode tomorrow.
+  show._embedded.nextepisode = {
+    ...show._embedded.previousepisode,
+    id: 9_000_003,
+    season: 38,
+    number: 11,
+    airdate: '2026-12-09',
+    airtime: '20:00',
+    airstamp: '2026-12-10T01:00:00+00:00',
+  };
+  world.clock.now = Date.parse('2026-12-08T12:00:00Z');
+  await world.app.refresh();
+  await world.app.idle();
+  assert.equal(world.fake.sceneEvents.length, 0);
 });
 
-test('identify_device reports a device that cannot signal itself through its output', async () => {
-  // Not a failure: a scene action is never a condition, the scene author
-  // gates the following actions on the output instead.
-  const gladys = createFakeGladys();
-  const outputs = await SCENE_ACTIONS.identify_device(gladys, {
-    fields: { device: deviceIdOf(gladys, 'weather-station') },
-    config,
+test('"next episode": a show by its title, or the soonest of all', async () => {
+  const world = await sharedWorld();
+  const run = async (fields) => (await world.fake.sceneAction('next_episode', fields)).data.outputs;
+  assert.deepEqual(await run({}), {
+    found: 1,
+    show: 'The Simpsons',
+    episode: 'Dream Scenari-Moe',
+    code: 'S38E07',
+    date: 'lun. 16 nov., 02:30',
+    days_left: 2,
+    channel: 'FOX',
+    status: 'Prochain épisode daté',
+    last_episode: 'S38E06 · The Kosmic Kruiser · lun. 9 nov., 02:30',
   });
-  assert.deepEqual(outputs, { signalled: false });
+  const ended = await run({ show: 'breaking bad' });
+  assert.equal(ended.found, 1);
+  assert.equal(ended.days_left, -1);
+  assert.equal(ended.status, 'Terminée');
+  assert.match(ended.last_episode, /El Camino/);
+  assert.equal((await run({ show: 'sever' })).status, 'En cours, sans date');
+  assert.equal((await run({ show: 'Lost' })).found, 0);
+});
+
+test('the widget lists the coming episodes and where each show stands', async () => {
+  const world = await sharedWorld();
+  const get = async (settings, language = 'en') =>
+    (await world.fake.widgetGet(SHOWS_WIDGET, { settings, language, units: 'metric' })).data
+      .content;
+  const content = await get({ days: '14' });
+  assert.deepEqual(validateWidgetContent(content), []);
+  const [list, status] = content.components;
+  assert.deepEqual(
+    list.items.map((item) => item.subtitle),
+    ['S38E07 · Mon 16 Nov, 02:30 · FOX', 'S38E08 · Mon 23 Nov, 02:00 · FOX'],
+  );
+  assert.deepEqual(
+    status.items.map((item) => [item.label, item.value]),
+    [
+      ['The Simpsons', 'In 2 days'],
+      ['Breaking Bad', 'Ended'],
+      ['Severance', 'Running, no date yet'],
+    ],
+  );
+  const short = await get({ show_status: false, shows: 'Severance' });
+  assert.deepEqual(validateWidgetContent(short), []);
+  assert.deepEqual(short.components, [
+    { type: 'text', variant: 'caption', text: 'No episode in this period.' },
+  ]);
+  world.clock.now = Date.parse('2026-11-15T23:30:00Z'); // Monday 00:30 in Paris
+  const today = await get({ show_status: false }, 'fr');
+  assert.deepEqual(today.components[0].items[0].badge, { text: "Aujourd'hui", color: 'success' });
+});
+
+test('the widget says when nothing is shared', async () => {
+  const world = await createWorld({ accounts: [account('alice', '#83')] });
+  const ack = await world.fake.widgetGet(SHOWS_WIDGET, { settings: {}, language: 'de' });
+  assert.match(ack.data.content.components[0].text, /Kein geteilter Serienkalender/);
 });
