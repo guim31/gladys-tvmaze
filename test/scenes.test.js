@@ -87,6 +87,31 @@ test('"episode announced" fires when a show without a date gets one', async () =
   assert.ok(world.eventsOf('alice').some((entry) => entry.name.startsWith('Severance S03E01')));
 });
 
+test('"episode announced" also fires when the last known episode has aired', async () => {
+  const show = fixture('show-83');
+  const api = fakeTvMaze({ '/shows/83': () => show });
+  const world = await sharedWorld({ api });
+  // Read on 14 November, the next episode was S38E07. By 10 December the
+  // season finale (7 December) aired, and TVmaze dates the next season.
+  show._embedded.nextepisode = {
+    ...show._embedded.previousepisode,
+    id: 9_000_002,
+    name: 'Season 39 premiere',
+    season: 39,
+    number: 1,
+    airdate: '2027-01-10',
+    airtime: '20:00',
+    airstamp: '2027-01-11T01:00:00+00:00',
+  };
+  world.clock.now = Date.parse('2026-12-10T17:00:00Z');
+  await world.app.refresh();
+  await world.app.idle();
+  assert.deepEqual(
+    world.fake.sceneEvents.map((event) => [event.key, event.data.code, event.data.days_left]),
+    [[TRIGGERS.EPISODE_ANNOUNCED, 'S39E01', 32]],
+  );
+});
+
 test('"next episode": a show by its title, or the soonest of all', async () => {
   const world = await sharedWorld();
   const run = async (fields) => (await world.fake.sceneAction('next_episode', fields)).data.outputs;

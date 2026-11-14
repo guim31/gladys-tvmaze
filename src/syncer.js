@@ -84,6 +84,9 @@ export function calendarDescription(user, language) {
   if (user.dropped > 0) {
     lines.push(`${text.tooMany(user.dropped)}.`);
   }
+  if (user.truncated > 0) {
+    lines.push(`${text.truncated(user.truncated)}.`);
+  }
   const credit = text.credit;
   return `${truncate(lines.join('\n'), MAX_DESCRIPTION - credit.length - 1)}\n${credit}`;
 }
@@ -125,6 +128,8 @@ export class Syncer {
   /** Every enabled user, re-read from the core (the resync contract). */
   syncAll({ force = false } = {}) {
     return this.queue(async () => {
+      // "Check" reads each show once, however many users follow it.
+      const forced = force ? new Set() : null;
       const accounts = await this.gladys.getCalendarAccounts();
       const calendars = await this.gladys.getCalendars();
       const enabled = new Set(accounts.map((account) => account.user.selector));
@@ -137,7 +142,7 @@ export class Syncer {
       for (const account of accounts) {
         const own = calendars.filter((calendar) => calendar.user === account.user.selector);
         try {
-          await this.syncAccount(account, own, { force });
+          await this.syncAccount(account, own, { forced });
         } catch (err) {
           failures.push(`${account.user.selector}: ${describe(err)}`);
         }
@@ -179,7 +184,7 @@ export class Syncer {
     return this.gladys.externalId(`${selector}:shows`);
   }
 
-  async syncAccount(account, existing, { force = false } = {}) {
+  async syncAccount(account, existing, { forced = null } = {}) {
     const { selector } = account.user;
     const language = languageOf(account.user.language, this.getConfig().language);
     const { entries, dropped } = parseShowList(account.config?.[SHOWS_KEY]);
@@ -195,6 +200,8 @@ export class Syncer {
           notFound.push(entry.raw);
           continue;
         }
+        const force = forced !== null && !forced.has(resolved.id);
+        forced?.add(resolved.id);
         const data = await this.catalog.load(resolved.id, { force });
         if (!data) {
           notFound.push(entry.raw);
@@ -216,6 +223,24 @@ export class Syncer {
       unavailable,
       dropped,
     };
+
+    const today = localDate(this.now());
+    const from = localTime(addDays(today, -PAST_DAYS), 0);
+    let to = localTime(addDays(today, FUTURE_DAYS), 0);
+    let list = shows
+      .flatMap(({ show, episodes }) =>
+        episodes
+          .filter((episode) => episode.end > from && episode.start < to)
+          .map((episode) => ({ show, episode })),
+      )
+      .sort((a, b) => a.episode.start - b.episode.start || a.episode.id - b.episode.id);
+    // One request per window, 500 events at most: the latest ones are left
+    // out (daily shows only), and the description says how many.
+    user.truncated = Math.max(0, list.length - MAX_EVENTS);
+    if (user.truncated > 0) {
+      list = list.slice(0, MAX_EVENTS);
+      to = list[list.length - 1].episode.start + 1;
+    }
 
     const calendarId = this.calendarId(selector);
     await this.limit();
@@ -249,20 +274,6 @@ export class Syncer {
     if (!user.sync) {
       // `sync: false` is the user saying no: the core would answer 403.
       return;
-    }
-    const today = localDate(this.now());
-    const from = localTime(addDays(today, -PAST_DAYS), 0);
-    let to = localTime(addDays(today, FUTURE_DAYS), 0);
-    let list = shows
-      .flatMap(({ show, episodes }) =>
-        episodes
-          .filter((episode) => episode.end > from && episode.start < to)
-          .map((episode) => ({ show, episode })),
-      )
-      .sort((a, b) => a.episode.start - b.episode.start || a.episode.id - b.episode.id);
-    if (list.length > MAX_EVENTS) {
-      list = list.slice(0, MAX_EVENTS);
-      to = list[list.length - 1].episode.start + 1;
     }
     await this.limit();
     try {

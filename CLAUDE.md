@@ -299,3 +299,14 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Le message « le jour de la diffusion aux utilisateurs choisis » du brief n'est pas codé : une intégration
   `calendar` ne peut pas écrire aux utilisateurs. C'est une scène (déclencheur + « Envoyer un message »),
   documentée, donc désactivée tant que personne ne la crée.
+- **Relecture** : une série est « à relire » 30 min avant ses 6 h (`FRESH_MS`), sinon la première
+  synchronisation, qui dure quelques minutes, la décale au tour suivant (12 h). « Vérifier » force chaque
+  série une seule fois, quel que soit le nombre d'abonnés. Un 404 sur une saison listée est une erreur
+  (le cache est gardé, rien n'est élagué) ; une série connue n'est oubliée qu'au troisième 404 de suite.
+- L'annonce compare au **prochain épisode encore à venir** du cache (`nextEpisode(cached.episodes, now)`),
+  pas au `next` de la lecture précédente, qui peut avoir été diffusé entre-temps (fin de saison).
+- Seule une synchronisation complète efface l'échec et sa reprise : le succès d'un utilisateur
+  (`syncUser`) ne dit rien des autres. Les bascules « partager » / « synchroniser » arrivent par
+  `onCalendarAccountUpdated` (le cœur notifie), qui relit les drapeaux.
+- Plus de 500 épisodes dans la fenêtre (séries quotidiennes) : les plus lointains sont omis, et la
+  description du calendrier le dit.

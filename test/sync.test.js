@@ -88,11 +88,35 @@ test('TVmaze is read again after six hours, not before', async () => {
   world.clock.now += 3 * 3_600_000;
   await world.app.refresh();
   await world.app.idle();
-  assert.equal(world.api.calls.length, 2);
-  world.clock.now += 3 * 3_600_000;
+  assert.equal(world.api.calls.length, 2, 'not before');
+  // A show read during the first sync is due at the next 6-hour tick.
+  world.clock.now += 2 * 3_600_000 + 40 * 60_000;
   await world.app.refresh();
   await world.app.idle();
   assert.equal(world.api.calls.length, 4);
+});
+
+test('"Check" reads each show once, however many users follow it', async () => {
+  const world = await createWorld({ accounts: [account('alice', '#83'), account('bob', '#83')] });
+  world.api.calls.length = 0;
+  await world.fake.action('check', {});
+  assert.deepEqual(world.api.calls, ['/shows/83', '/seasons/201386/episodes']);
+});
+
+test('a season or a show answering 404 once does not empty the calendar', async () => {
+  const api = fakeTvMaze();
+  const world = await createWorld({ accounts: [account('alice', '#83')], api });
+  api.routes['/seasons/201386/episodes'] = 404;
+  world.clock.now += 7 * 3_600_000;
+  await world.app.refresh();
+  await world.app.idle();
+  assert.equal(world.eventsOf('alice').length, 6);
+  api.routes['/seasons/201386/episodes'] = fixture('season-201386-episodes');
+  api.routes['/shows/83'] = 404;
+  world.clock.now += 3_600_000;
+  await world.fake.action('check', {});
+  assert.equal(world.eventsOf('alice').length, 6);
+  assert.doesNotMatch(world.calendarOf('alice').description, /Introuvable/);
 });
 
 test('a show removed from the list leaves the calendar', async () => {
@@ -182,4 +206,16 @@ test('the TVmaze client spaces its calls and waits on a 429', async () => {
   assert.equal(await client.show(1), null);
   answers = [429, 429, 429];
   await assert.rejects(client.search('z'), /HTTP 429 \(rate limited\)/);
+});
+
+test('"Search a show" lists the matches with their ids, or says TVmaze is down', async () => {
+  const api = fakeTvMaze();
+  const world = await createWorld({ api });
+  const found = await world.fake.action('search', { query: 'The Office' });
+  assert.match(found.data.message.en, /^Found: The Office \(2005, NBC, #526\) · The Office \(2001/);
+  assert.ok(Object.values(found.data.message).every((text) => text.length <= 200));
+  api.fail = true;
+  const down = await world.fake.action('search', { query: 'The Office' });
+  assert.equal(down.success, true);
+  assert.match(down.data.message.fr, /TVmaze est illisible/);
 });

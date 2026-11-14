@@ -30,6 +30,8 @@ export function fakeTvMaze(extra = {}) {
     '/shows/526': fixture('show-526'),
     '/shows/44933': fixture('show-44933'),
     '/seasons/201386/episodes': fixture('season-201386-episodes'),
+    // Severance season 3: listed, not dated, no episode yet (14 November 2026).
+    '/seasons/183341/episodes': [],
     '/search/shows?q=the%20office': fixture('search-the-office'),
     '/search/shows?q=The%20Office': fixture('search-the-office'),
     '/search/shows?q=Severance': fixture('search-severance'),

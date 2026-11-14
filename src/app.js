@@ -80,16 +80,20 @@ export function registerHandlers(gladys, deps = {}) {
   }
 
   // A synchronization failing again and again: one line, not one per try.
-  async function run(label, fn) {
+  // Only a full synchronization ends a failure: one user's success says
+  // nothing of the others, whose retry stays scheduled.
+  async function run(label, fn, { full = true } = {}) {
     try {
       const result = await fn();
-      if (failing) {
-        failing = false;
-        logger.info('Synchronization works again');
+      if (full) {
+        if (failing) {
+          failing = false;
+          logger.info('Synchronization works again');
+        }
+        clearTimeout(retryTimer);
+        retryTimer = null;
+        retryMs = RETRY_MIN_MS;
       }
-      clearTimeout(retryTimer);
-      retryTimer = null;
-      retryMs = RETRY_MIN_MS;
       return result;
     } catch (err) {
       if (!failing) {
@@ -203,7 +207,9 @@ export function registerHandlers(gladys, deps = {}) {
 
   gladys.onCalendarAccountUpdated(async (userSelector) => {
     logger.info(`Shows of ${userSelector} updated`);
-    pending = run('Synchronization', () => syncer.syncUser(userSelector)).then(() => tick());
+    pending = run('Synchronization', () => syncer.syncUser(userSelector), { full: false }).then(
+      () => tick(),
+    );
   });
 
   gladys.onAction(CHECK_ACTION, async () => {
@@ -238,7 +244,13 @@ export function registerHandlers(gladys, deps = {}) {
       return allLanguages((language) => pick(TEXT, language).searchMissing);
     }
     logger.info('Action "search"');
-    const results = await catalog.search(query, 3);
+    let results;
+    try {
+      results = await catalog.search(query, 3);
+    } catch (err) {
+      logger.warn(`Search failed: ${describe(err)}`);
+      return allLanguages((language) => pick(TEXT, language).checkFailed);
+    }
     if (results.length === 0) {
       return allLanguages((language) => pick(TEXT, language).searchEmpty(query));
     }

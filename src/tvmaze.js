@@ -103,7 +103,12 @@ export function createTvMaze({
     /** The episodes of a season (specials included). */
     async seasonEpisodes(seasonId) {
       const list = await get(`/seasons/${Number(seasonId)}/episodes`);
-      return Array.isArray(list) ? list : [];
+      // A season listed by its show cannot vanish: a 404 here is a hiccup,
+      // and an empty list would prune its episodes from the calendars.
+      if (!Array.isArray(list)) {
+        throw new TvMazeError(`TVmaze has no episodes for season ${Number(seasonId)}`, 404);
+      }
+      return list;
     },
   };
 }

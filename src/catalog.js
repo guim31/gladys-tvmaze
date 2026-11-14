@@ -10,9 +10,15 @@
 // -----------------------------------------------------------------------------
 
 import { localDate } from './time.js';
-import { fold, mergeEpisodes, normalizeShow, seasonsToRead } from './shows.js';
+import { fold, mergeEpisodes, nextEpisode, normalizeShow, seasonsToRead } from './shows.js';
 
 export const REFRESH_MS = 6 * 3_600_000;
+// A show read during the previous refresh (a sync takes minutes) is due at
+// this one, not six hours later.
+const FRESH_MS = REFRESH_MS - 30 * 60_000;
+// A show TVmaze answers 404 for, while it was known: dropped at the third
+// answer in a row, never on a single one.
+const MISSING_LIMIT = 3;
 const SEARCH_TTL_MS = 7 * 86_400_000;
 // After a failed reading, a show is not asked again before this delay.
 const FAILURE_BACKOFF_MS = 10 * 60_000;
@@ -86,7 +92,7 @@ export class Catalog {
   async load(id, { force = false } = {}) {
     const cached = this.shows.get(id);
     const now = this.now();
-    if (cached && !force && now - cached.fetchedAt < REFRESH_MS) {
+    if (cached && !force && now - cached.fetchedAt < FRESH_MS) {
       return cached;
     }
     if (cached && !force && now - (this.failedAt.get(id) ?? -Infinity) < FAILURE_BACKOFF_MS) {
@@ -95,6 +101,11 @@ export class Catalog {
     try {
       const raw = await this.client.show(id);
       if (!raw?.id) {
+        if (cached && (cached.missing ?? 0) + 1 < MISSING_LIMIT) {
+          cached.missing = (cached.missing ?? 0) + 1;
+          this.failedAt.set(id, now);
+          return cached;
+        }
         this.shows.delete(id);
         return null;
       }
@@ -104,9 +115,9 @@ export class Catalog {
         rawEpisodes.push(...(await this.client.seasonEpisodes(season.id)));
       }
       const entry = { show, episodes: mergeEpisodes(show, rawEpisodes), fetchedAt: now };
-      // A show back on the schedule: it had no next episode at the last
-      // reading (a renewal dated, a season announced).
-      if (cached && !cached.show.next && show.next && show.next.start > now) {
+      // A show back on the schedule: it had no next episode left at the last
+      // reading (a renewal dated, a season announced), and now has one.
+      if (cached && !nextEpisode(cached.episodes, now) && show.next && show.next.end > now) {
         this.announced.push({ show, episode: show.next });
       }
       this.shows.set(id, entry);
